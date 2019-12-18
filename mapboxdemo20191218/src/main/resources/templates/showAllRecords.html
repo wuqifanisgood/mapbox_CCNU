@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+	<title>所有记录</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<script src="https://cdn.staticfile.org/jquery/3.0.0/jquery.min.js"></script>
+	<!-- <script src="../layui/layui.all.js"></script> -->
+<!--		<link rel="stylesheet" type="text/css" href="../layui/css/layui.css"/>		&lt;!&ndash; layui引入css和 js &ndash;&gt;-->
+	<link rel="stylesheet" type="text/css" th:href="@{/layui/css/layui.css}"/>		<!-- layui引入css和 js -->
+</head>
+<body>
+	<div class="layui-container">
+		<h1 style="text-align: center;">华中师范大学农情数据采集系统</h1>
+		<table class="layui-table" >
+		  <colgroup>
+			<col width="150">
+			<col width="200">
+			<col>
+		  </colgroup>
+		  <thead>
+			<tr>
+			  <th>id</th>
+			  <th>记录时间</th>
+			  <th>纬度</th>
+			  <th>经度</th>
+			  <th>地物类别</th>
+			  <th>备注</th>
+			</tr>
+		  </thead>
+		  <tbody>
+			<tr th:each="user:${session.userList}">
+			  <td th:text="${user.id}">贤心</td>
+			  <td th:text="${user.createTime}">2016-11-29</td>
+			  <td th:text="${user.lat}">人生就像是一场修行</td>
+			  <td th:text="${user.lng}">人生就像是一场修行2</td>
+			  <td th:text="${user.landClass}">人生就像是一场修行3</td>
+			  <td th:text="${user.userDescription}">人生就像是一场修行4</td>
+			</tr>
+		  </tbody>
+		</table>
+	</div>
+
+</body>
+</html>

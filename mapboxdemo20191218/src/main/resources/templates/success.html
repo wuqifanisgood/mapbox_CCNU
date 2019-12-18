@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+	<title>提交成功</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<!--		<script src="https://cdn.staticfile.org/jquery/3.0.0/jquery.min.js"></script>-->
+	<link rel="stylesheet" type="text/css" th:href="@{/layui/css/layui.css}"/>		<!-- layui引入css和 js -->
+</head>
+<body>
+	<div class="layui-container">
+		<h1 style="text-align: center; color: #00FF00;">数据提交成功,即将跳转至主页...(*▽*)</h1>
+	</div>
+
+	<script language="JavaScript" type="text/javascript">
+		function Redirect(){
+			window.location.href = "templates/index.html";   //要跳转的页面
+		}
+
+		function Redirect2() {
+			window.history.back(-1);
+		}
+
+		setTimeout('Redirect2()', 2000);       //第二个参数是时间，单位毫秒
+	</script>
+</body>
+</html>

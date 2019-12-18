@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset='utf-8' />
+    <title>点击地图添加marker2019-12-11</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+	<script src="https://cdn.staticfile.org/jquery/3.0.0/jquery.min.js"></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet' />
+	<script type="text/javascript" th:src="@{/js/mapboxgl-control-minimap.js}"></script>	<!-- 注意路径鹰眼图 -->
+	<script th:src="@{/layui/layui.all.js}"></script>
+	<link rel="stylesheet" type="text/css" th:href="@{/layui/css/layui.css}"/>		<!-- layui引入css和 js -->
+	
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+		#form_Button{position: absolute;right: 11%;}
+    </style>
+</head>
+<body>
+	<!-- 左下角坐标显示css -->
+	<style>
+		.coordinates {
+			background: rgba(0,0,0,0.5);
+			color: #fff;
+			position: absolute;
+			bottom: 40px;
+			left: 10px;
+			padding:5px 10px;
+			margin: 0;
+			font-size: 11px;
+			line-height: 18px;
+			border-radius: 3px;
+			display: none;
+		}
+	</style>
+
+	<!-- 图层转换css -->
+	<style>
+		#menu {
+			position: absolute;
+			right: 5px;
+			bottom: 0px;
+			background: #fff;
+			padding: 10px;
+			font-family: 'Open Sans', sans-serif;
+			font-size: 10px;
+		}
+	</style>
+	
+	<!-- 搜索框css -->
+	<style>
+		.geocoder {
+			position:absolute;
+			width:50%;
+			left:0px;
+			top:0px;
+		}
+		.mapboxgl-ctrl-geocoder { min-width:100%; }
+	</style>
+
+<div id='map' style="z-index: -1;"></div>		<!-- 主地图 -->
+<pre id="coordinates" class="coordinates"></pre>		<!-- 左下角坐标显示 -->
+<div id='geocoder' class='geocoder'></div>		<!-- 搜索框 -->
+<div id='menu'>
+    <input id='streets-v11' type='radio' name='rtoggle' value='streets' checked='checked'>
+    <label for='streets'>streets</label>
+    <input id='light-v10' type='radio' name='rtoggle' value='light'>
+    <label for='light'>light</label>
+    <input id='dark-v10' type='radio' name='rtoggle' value='dark'>
+    <label for='dark'>dark</label>
+    <input id='outdoors-v11' type='radio' name='rtoggle' value='outdoors'>
+    <label for='outdoors'>outdoors</label>
+    <input id='satellite-v9' type='radio' name='rtoggle' value='satellite'>
+    <label for='satellite'>satellite</label>
+</div>
+
+<!-- 表单弹出按钮 -->
+<div class="layui-input-inline" id="form_Button">
+	<button type="button" onclick="selectRole()" class="layui-btn layui-btn-primary layui-btn-radius">提交信息</button>
+</div>
+<!-- 弹出表单界面 -->
+<!--表单中的name属性要与实体类的属性名称一致-->
+<div class="layui-row" id="popSearchRoleTest" style="display:none;" >
+	<div class="layui-col-md10">
+		<form class="layui-form" action="" th:action="@{~/submit}" name="landForm" method="post">
+			<div class="layui-form-item">
+				<label class="layui-form-label">Longitude*：</label>
+				<div class="layui-input-inline">
+					<input type="text" class="layui-input" id="jingdu" required="required" name="lng">
+				</div>
+				
+				<label class="layui-form-label">Latitude*：</label>
+				<div class="layui-input-inline">
+				<input type="text" class="layui-input" id="weidu" required="required" name="lat">
+				</div>
+			</div>
+			
+			<div class="layui-form-item">
+				<label class="layui-form-label">地物类别*：</label>
+				<div class="layui-input-inline">
+					<select name="landClass" id="landClass" lay-verify="required">
+						<option value="请选择"></option>
+						<option value="小麦">1.小麦</option>
+						<option value="单季稻">2.单季稻</option>
+						<option value="双季稻">3.双季稻</option>
+						<option value="虾稻田">4.虾稻田</option>
+						<option value="大棚">5.大棚</option>
+						<option value="其他">6.其他(请备注)</option>
+					</select>
+				</div>
+			</div>
+		
+			<div class="layui-form-item">
+				<label class="layui-form-label">备注：</label>
+				<div class="layui-input-block">
+					<textarea placeholder="请输入内容" class="layui-textarea" name="userDescription" id="userDescription"></textarea>
+				</div>
+			</div>
+	   
+			<div class="layui-form-item">
+				<div class="layui-input-block">
+				<button lay-submit="" class="layui-btn layui-btn-normal">提交</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+
+<!-- 按钮弹出表单js -->
+<script>
+	function selectRole(){
+	// 动态获取marker的坐标赋值表单
+		if (marker){
+			$("#jingdu").attr("value",marker.getLngLat().lng);
+			$("#weidu").attr("value",marker.getLngLat().lat);
+			layer.open({
+				//layer提供了5种层类型。可传入的值有：0（信息框，默认）1（页面层）2（iframe层）3（加载层）4（tips层）
+				type:1,
+				title:"请填写标记点信息",
+				area: ['50%','50%'],
+				content:$("#popSearchRoleTest").html(),
+			});
+			layui.use('form', function () {
+				var form = layui.form; 
+				form.render(); 
+			});		//需要加载函数里面不然下拉框表单加载不出来
+		}else{
+			alert('请先标记点！');
+		}
+	}
+</script>
+
+<!-- 加入地图 -->
+<script>
+	mapboxgl.accessToken = 'pk.eyJ1Ijoid3VxaWZhbiIsImEiOiJjazNqamFndTkwaTRxM2hvY2t0b3N0a3cwIn0.NDkmyw9tMahhywtBbweMpg';
+	var map = new mapboxgl.Map({
+		container: 'map',
+		style: 'mapbox://styles/mapbox/streets-v11',
+		zoom: 6,	//数值越高表示初始显示的细节更多
+		center: [114, 30]
+	});
+
+	// 加载鹰眼 需要引入本地js-minimap
+		map.on("load", function () {
+			map.addControl(new mapboxgl.Minimap({
+				width: "120px",
+				height: "150px",
+				center: [114,30],		//与主地图center一致
+				zoom: 8,
+				zoomLevels: [],
+				scrollZoom: true,		//滚动缩放
+			}), 'top-left');
+		});
+
+</script>
+	<!-- 浏览器定位 -->
+<script>
+	// Add geolocate control to the map.
+	map.addControl(new mapboxgl.GeolocateControl({
+		positionOptions: {
+			enableHighAccuracy: true
+		},
+		trackUserLocation: true
+	}));
+</script>
+
+<!-- //鼠标单击加点 -->
+<script>
+	var lnglatXY;
+	var coordinates = document.getElementById('coordinates');
+	var marker;
+	var lngLat_Drag;
+	//实例化点标记,若已经存在,则单击会消失,再次单击会重新添加marker.
+	var marker_flag = 0;
+	function addMarker(lnglatXY){
+		if (marker_flag == 0) {
+			marker = new mapboxgl.Marker({
+				draggable: true,
+			})
+			.setLngLat(lnglatXY)
+			.addTo(map);
+			map.flyTo({center: lnglatXY,
+			speed: 0.6,		//飞行速度,//飞至marker点
+			zoom: 8,
+			});	
+		marker_flag = 1;
+		}else{
+			marker.remove();
+			marker_flag =0;
+		}
+	}
+		
+	//显示拖拽marker后的经纬度值
+	function onDragEnd() {
+		lngLat_Drag = marker.getLngLat();
+		coordinates.style.display = 'block';
+		coordinates.innerHTML = 'Longitude: ' + lngLat_Drag.lng + '<br />Latitude: ' + lngLat_Drag.lat;
+		// $('#jingdu').val(lngLat_Drag.lng);
+		// $('#weidu').val(lngLat_Drag.lat);
+		// $('#weidu').val('12312');
+		// layui.use('form', function () { var form = layui.form; form.render(); });		//需要加载函数里面不然下拉框表单加载不出来
+	}
+	 
+	// 显示初始Marker的经纬度值
+	function showMarkerLngLat(){
+		firstLngLat = marker.getLngLat();
+		coordinates.style.display = 'block';
+		coordinates.innerHTML = 'Longitude: ' + firstLngLat.lng + '<br />Latitude: ' + firstLngLat.lat;
+	}
+	
+	//鼠标click事件点击出经纬度坐标
+	//先判断是否存在点,若存在则移除,若不存在则添加,防止地图上出现多个marker.
+		map.on('click',function(e){
+			lnglatXY = [e.lngLat.lng,e.lngLat.lat];
+			addMarker(lnglatXY);
+			showMarkerLngLat();
+			marker.on('dragend', onDragEnd);
+		});
+		
+</script>
+
+<!-- 图层切换 -->
+<script>
+	var layerList = document.getElementById('menu');
+	var inputs = layerList.getElementsByTagName('input');
+
+	function switchLayer(layer) {
+		var layerId = layer.target.id;
+		map.setStyle('mapbox://styles/mapbox/' + layerId);
+	}
+
+	for (var i = 0; i < inputs.length; i++) {
+		inputs[i].onclick = switchLayer;
+	}
+</script>
+
+<!-- 搜索框 需要引入geocoder.min.js和css-->
+<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.3.0/mapbox-gl-geocoder.min.js'></script>
+<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.3.0/mapbox-gl-geocoder.css' type='text/css' />
+<script>
+	var coordinatesGeocoder = function (query) {
+		// match anything which looks like a decimal degrees coordinate pair
+	var matches = query.match(/^[ ]*(?:Lat: )?(-?\d+\.?\d*)[, ]+(?:Lng: )?(-?\d+\.?\d*)[ ]*$/i);
+	if (!matches) {
+	return null;
+	}
+	 
+	function coordinateFeature(lng, lat) {
+	return {
+	center: [lng, lat],
+	geometry: {
+	type: "Point",
+	coordinates: [lng, lat]
+	},
+	place_name: 'Lat: ' + lat + ' Lng: ' + lng, // eslint-disable-line camelcase
+	place_type: ['coordinate'], // eslint-disable-line camelcase
+	properties: {},
+	type: 'Feature'
+	};
+	}
+	 
+	var coord1 = Number(matches[1]);
+	var coord2 = Number(matches[2]);
+	var geocodes = [];
+	 
+	if (coord1 < -90 || coord1 > 90) {
+	// must be lng, lat
+	geocodes.push(coordinateFeature(coord1, coord2));
+	}
+	 
+	if (coord2 < -90 || coord2 > 90) {
+	// must be lat, lng
+	geocodes.push(coordinateFeature(coord2, coord1));
+	}
+	 
+	if (geocodes.length === 0) {
+	// else could be either lng, lat or lat, lng
+	geocodes.push(coordinateFeature(coord1, coord2));
+	geocodes.push(coordinateFeature(coord2, coord1));
+	}
+	 
+	return geocodes;
+	};
+	
+	var geocoder = new MapboxGeocoder({
+	    accessToken: mapboxgl.accessToken,
+		localGeocoder: coordinatesGeocoder,
+		placeholder: "Try: -40, 170 or Address",
+		zoom:4,
+	    mapboxgl: mapboxgl
+	});
+	
+	document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
+</script>
+
+</body>
+</html>
